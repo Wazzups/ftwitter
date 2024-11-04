@@ -14,23 +14,23 @@ public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "role_id")
-    private Long roleId;
+    private Integer roleId;
 
     private String authority;
 
     public Role() {
     }
 
-    public Role(Long roleId, String authority) {
+    public Role(Integer roleId, String authority) {
         this.roleId = roleId;
         this.authority = authority;
     }
 
-    public Long getRoleId() {
+    public Integer getRoleId() {
         return roleId;
     }
 
-    public void setRoleId(Long roleId) {
+    public void setRoleId(Integer roleId) {
         this.roleId = roleId;
     }
 
