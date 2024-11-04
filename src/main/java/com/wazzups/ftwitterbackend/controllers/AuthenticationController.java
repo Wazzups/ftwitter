@@ -1,6 +1,7 @@
 package com.wazzups.ftwitterbackend.controllers;
 
 import com.wazzups.ftwitterbackend.exceptions.EmailAlreadyTakenException;
+import com.wazzups.ftwitterbackend.exceptions.EmailFailedToSendException;
 import com.wazzups.ftwitterbackend.exceptions.UserDoesNotExistException;
 import com.wazzups.ftwitterbackend.models.ApplicationUser;
 import com.wazzups.ftwitterbackend.models.RegistrationObject;
@@ -55,5 +56,10 @@ public class AuthenticationController {
         userService.generateEmailVerificationCode(body.get("username"));
 
         return new ResponseEntity<>("Email verification code generated", HttpStatus.OK);
+    }
+
+    @ExceptionHandler(EmailFailedToSendException.class)
+    public ResponseEntity<String> handleEmailFailedToSendException() {
+        return new ResponseEntity<>("Email failed", HttpStatus.CONFLICT);
     }
 }

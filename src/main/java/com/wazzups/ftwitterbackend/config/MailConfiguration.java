@@ -56,7 +56,7 @@ public class MailConfiguration {
     }
 
     @Bean
-    public Gmail getGmailService() {
+    public Gmail gmail() {
         try {
             NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 

@@ -15,10 +15,12 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final MailService mailService;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, MailService mailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.mailService = mailService;
     }
 
     public ApplicationUser registerUser(RegistrationObject ro) {
@@ -65,8 +67,13 @@ public class UserService {
     public void generateEmailVerificationCode(String username) {
         ApplicationUser user = userRepository.findByUsername(username).orElseThrow(UserDoesNotExistException::new);
         user.setVerificationCode(generateVerificationCode());
-        userRepository.save(user);
 
+        try {
+            mailService.sendMail(user.getEmail(), "Your verification code", "Here is your verification code" + user.getVerificationCode());
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new EmailAlreadyTakenException();
+        }
     }
 
     private Long generateVerificationCode() {
