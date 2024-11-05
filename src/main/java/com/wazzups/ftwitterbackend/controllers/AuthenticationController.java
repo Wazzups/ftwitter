@@ -2,6 +2,7 @@ package com.wazzups.ftwitterbackend.controllers;
 
 import com.wazzups.ftwitterbackend.exceptions.EmailAlreadyTakenException;
 import com.wazzups.ftwitterbackend.exceptions.EmailFailedToSendException;
+import com.wazzups.ftwitterbackend.exceptions.IncorrectVerificationCodeException;
 import com.wazzups.ftwitterbackend.exceptions.UserDoesNotExistException;
 import com.wazzups.ftwitterbackend.models.ApplicationUser;
 import com.wazzups.ftwitterbackend.models.RegistrationObject;
@@ -60,6 +61,26 @@ public class AuthenticationController {
 
     @ExceptionHandler(EmailFailedToSendException.class)
     public ResponseEntity<String> handleEmailFailedToSendException() {
-        return new ResponseEntity<>("Email failed", HttpStatus.CONFLICT);
+        return new ResponseEntity<>("Email failed", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PostMapping("/email/verify")
+    public ApplicationUser verifyEmail(@RequestBody LinkedHashMap<String, String> body) {
+        Long code = Long.parseLong(body.get("code"));
+        String username = body.get("username");
+
+        return userService.verifyEmail(username, code);
+    }
+
+    @ExceptionHandler(IncorrectVerificationCodeException.class)
+    public ResponseEntity<String> handleIncorrectVerificationCodeException() {
+        return new ResponseEntity<>("Incorrect verification code", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PutMapping("/update/password")
+    public ApplicationUser updatePassword(@RequestBody LinkedHashMap<String, String> body) {
+        String username = body.get("username");
+        String password = body.get("password");
+        return userService.setPassword(username, password);
     }
 }

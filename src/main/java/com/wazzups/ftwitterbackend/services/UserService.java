@@ -1,6 +1,7 @@
 package com.wazzups.ftwitterbackend.services;
 
 import com.wazzups.ftwitterbackend.exceptions.EmailAlreadyTakenException;
+import com.wazzups.ftwitterbackend.exceptions.IncorrectVerificationCodeException;
 import com.wazzups.ftwitterbackend.exceptions.UserDoesNotExistException;
 import com.wazzups.ftwitterbackend.models.ApplicationUser;
 import com.wazzups.ftwitterbackend.models.RegistrationObject;
@@ -9,6 +10,8 @@ import com.wazzups.ftwitterbackend.repositories.RoleRepository;
 import com.wazzups.ftwitterbackend.repositories.UserRepository;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,11 +19,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final MailService mailService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, MailService mailService) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, MailService mailService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.mailService = mailService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public ApplicationUser registerUser(RegistrationObject ro) {
@@ -69,7 +74,7 @@ public class UserService {
         user.setVerificationCode(generateVerificationCode());
 
         try {
-            mailService.sendMail(user.getEmail(), "Your verification code", "Here is your verification code" + user.getVerificationCode());
+            mailService.sendMail(user.getEmail(), "Your verification code", "Here is your verification code: " + user.getVerificationCode());
             userRepository.save(user);
         } catch (Exception e) {
             throw new EmailAlreadyTakenException();
@@ -85,5 +90,22 @@ public class UserService {
         long generateNumber = (long) Math.floor(Math.random() * 1_000_000_000);
         return name + generateNumber;
 
+    }
+
+    public ApplicationUser verifyEmail(String username, Long code) {
+        ApplicationUser user = userRepository.findByUsername(username).orElseThrow(UserDoesNotExistException::new);
+        if (code.equals(user.getVerificationCode())) {
+            user.setEnabled(true);
+            userRepository.save(user);
+        } else {
+            throw new IncorrectVerificationCodeException();
+        }
+        return user;
+    }
+
+    public ApplicationUser setPassword(String username, String password) {
+        ApplicationUser user = userRepository.findByUsername(username).orElseThrow(UserDoesNotExistException::new);
+        user.setPassword(passwordEncoder.encode(password));
+        return userRepository.save(user);
     }
 }
